@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Viking Power Search",
+  "version": "1.0.0",
+  "description": "Save Viking Cruises Australia itineraries and find the earliest lowest-priced PS3 (Penthouse Junior Suite) departure date.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA9FxN/BTB3lKi5kv1NjqbBQHrvNu2oYdroFdI+JYAoc/L2F4uN4tpCIO8MvS+HadSre/sbH7YttsZmAuodHyUabAPcCQlsUcTGvvad22oJ77IeyBABHyCb3uvj6NzoMyJVkqPwH5ZQeVUcifQ0P8qFlJwrdwp+rtf/7yWZwdm0zTzhFDLPqh8eMF7QmaB2+/DvOdDjP9PtDyjdL+UgHuYIjhbWfGbo5hCydnUdVEWSHkU2Gu6m0kMsLHY7QK22izM3U0blWhVa83RZpz52fsZgx/iMHAX1bs16CSKIk+VO7DaZhYAYWKnwhHJlleh6SDrqleYauGtbrArRtzv+zNonwIDAQAB",
+  "icons": {
+    "128": "icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Viking Power Search",
+    "default_icon": {
+      "128": "icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://www.vikingcruises.com.au/*"
+  ]
+}

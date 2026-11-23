@@ -1,323 +1,320 @@
-let profiles= {}
 
-;
-
-// Populate the profile dropdown with loaded profile keys
-function renderProfileDropdown(loadedProfiles) {
-    profiles=loadedProfiles || {}
-
-    ;
-    const select=document.getElementById('profileSelect');
-    select.innerHTML='<option value="">-- New --</option>';
-
-    Object.keys(profiles).forEach(name=> {
-            const opt=document.createElement('option');
-            opt.value=name;
-            opt.textContent=name;
-            select.appendChild(opt);
-        });
+body {
+    width: 340px;
+    font-family: sans-serif;
+    padding: 10px;
+    margin: 0;
+    background: #fdfdfd;
+    color: #222;
 }
 
-// Load profiles from sync storage with automatic migration from local storage
-function loadProfiles() {
-    chrome.storage.sync.get(['flightProfiles'], (result)=> {
-            if (result.flightProfiles && Object.keys(result.flightProfiles).length > 0) {
-                renderProfileDropdown(result.flightProfiles);
-            }
 
-            else {
-                chrome.storage.local.get(['flightProfiles'], (localResult)=> {
-                        if (localResult.flightProfiles && Object.keys(localResult.flightProfiles).length > 0) {
-                            chrome.storage.sync.set({
-                                flightProfiles: localResult.flightProfiles
-                            });
-                        renderProfileDropdown(localResult.flightProfiles);
-                    }
-
-                    else {
-                        renderProfileDropdown({});
-                }
-            });
-    }
-});
+h3 {
+    margin: 0 0 10px 0;
+    font-size: 15px;
+    color: #e40000;
+    border-bottom: 2px solid #e40000;
+    padding-bottom: 4px;
 }
 
-// Function to update min/max constraints on date widgets
-function updateDateConstraints() {
-    const startInput=document.getElementById('startDate');
-    const endInput=document.getElementById('endDate');
-    if ( !startInput || !endInput) return;
 
-    if (startInput.value) {
-        endInput.min=startInput.value;
+    .form-group {
+        margin-bottom: 8px;
     }
 
-    else {
-        endInput.removeAttribute('min');
+
+    .profile-bar {
+        background: #f0f0f0;
+        padding: 8px;
+        border-radius: 4px;
+        margin-bottom: 12px;
     }
 
-    if (endInput.value) {
-        startInput.max=endInput.value;
+
+    label {
+        display: block;
+        font-size: 10px;
+        font-weight: bold;
+        margin-bottom: 2px;
+        color: #444;
+        text-transform: uppercase;
     }
 
-    else {
-        startInput.removeAttribute('max');
-    }
-}
 
-document.addEventListener('DOMContentLoaded', ()=> {
-        loadProfiles();
-
-        const startInput=document.getElementById('startDate');
-        const endInput=document.getElementById('endDate');
-
-        // Initial constraints check
-        updateDateConstraints();
-
-        // Validation: When start date changes, ensure end date is not earlier and update constraints
-        startInput.addEventListener('change', ()=> {
-                if (startInput.value && endInput.value) {
-                    if (new Date(endInput.value) < new Date(startInput.value)) {
-                        endInput.value=startInput.value;
-                    }
+                .label-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 2px;
                 }
 
-                updateDateConstraints();
-            });
 
-        // Validation: When end date changes, ensure start date is not later and update constraints
-        endInput.addEventListener('change', ()=> {
-                if (startInput.value && endInput.value) {
-                    if (new Date(startInput.value) > new Date(endInput.value)) {
-                        startInput.value=endInput.value;
-                    }
-                }
-
-                updateDateConstraints();
-            });
-    });
-
-// Handle Profile Selection
-document.getElementById('profileSelect').addEventListener('change', (e)=> {
-        const name=e.target.value;
-        const deleteBtn=document.getElementById('deleteBtn');
-
-        if (name && profiles[name]) {
-            const data=profiles[name];
-            document.getElementById('profileName').value=name;
-            document.getElementById('origin').value=data.origin || '';
-            document.getElementById('destination').value=data.destination || '';
-            document.getElementById('startDate').value=data.startDate || '';
-            document.getElementById('endDate').value=data.endDate || '';
-            document.getElementById('passengers').value=data.passengers || 1;
-
-            const cabinCheckboxes=document.querySelectorAll('#cabinGroup input');
-
-            cabinCheckboxes.forEach(cb=> {
-                    cb.checked=data.cabins ? data.cabins.includes(cb.value) : false;
-                });
-
-            const stopCheckboxes=document.querySelectorAll('#stopsGroup input');
-
-            stopCheckboxes.forEach(cb=> {
-                    cb.checked=data.stops ? data.stops.includes(cb.value) : false;
-                });
-
-            if (deleteBtn) deleteBtn.disabled=false;
-        }
-
-        else if ( !name) {
-            document.querySelectorAll('input[type="text"], input[type="date"]').forEach(el=> el.value='');
-            document.getElementById('passengers').value=1;
-            document.querySelectorAll('input[type="checkbox"]').forEach(el=> el.checked=false);
-
-            if (deleteBtn) deleteBtn.disabled=true;
-        }
-
-        updateDateConstraints();
-    });
-
-// Delete Profile
-const deleteBtn=document.getElementById('deleteBtn');
-
-if (deleteBtn) {
-    deleteBtn.addEventListener('click', (e)=> {
-            const name=document.getElementById('profileSelect').value;
-
-            if (name && profiles[name]) {
-                delete profiles[name];
-
-                chrome.storage.sync.set({
-                    flightProfiles: profiles
-                }
-
-                , ()=> {
-                    const btn=e.target;
-                    const originalText=btn.textContent;
-
-                    btn.textContent='Deleted!';
-                    btn.style.backgroundColor='#dc3545';
-
-                    setTimeout(()=> {
-                            btn.textContent=originalText;
-                            btn.style.backgroundColor='';
+                        .label-row label {
+                            margin-bottom: 0;
                         }
 
-                        , 1000);
-
-                    const select=document.getElementById('profileSelect');
-                    select.value='';
-                    select.dispatchEvent(new Event('change'));
-
-                    loadProfiles();
-                });
-        }
-    });
+.mini-btn {
+    flex: none;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: bold;
+    background: #eee;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
 }
 
-// Save Profile
-document.getElementById('saveBtn').addEventListener('click', (e)=> {
-        const name=document.getElementById('profileName').value;
-        const btn=e.target;
-
-        if ( !name) {
-            const originalText=btn.textContent;
-            btn.textContent='Enter a name!';
-            btn.style.backgroundColor='#dc3545';
-
-            setTimeout(()=> {
-                    btn.textContent=originalText;
-                    btn.style.backgroundColor='#333';
-                }
-
-                , 2000);
-            return;
-        }
-
-        const selectedCabins=Array.from(document.querySelectorAll('#cabinGroup input:checked')) .map(cb=> cb.value);
-
-        const selectedStops=Array.from(document.querySelectorAll('#stopsGroup input:checked')) .map(cb=> cb.value);
-
-        profiles[name]= {
-            origin: document.getElementById('origin').value,
-            destination: document.getElementById('destination').value,
-            startDate: document.getElementById('startDate').value,
-            endDate: document.getElementById('endDate').value,
-            passengers: document.getElementById('passengers').value,
-            cabins: selectedCabins,
-            stops: selectedStops
-        }
-
-        ;
-
-        chrome.storage.sync.set({
-            flightProfiles: profiles
-        }
-
-        , ()=> {
-            const originalText=btn.textContent;
-            btn.textContent='Saved!';
-            btn.style.backgroundColor='#28a745';
-
-            setTimeout(()=> {
-                    btn.textContent=originalText;
-                    btn.style.backgroundColor='#333';
-                }
-
-                , 2000);
-
-            loadProfiles();
-
-            setTimeout(()=> {
-                    const select=document.getElementById('profileSelect');
-                    select.value=name;
-                    const dBtn=document.getElementById('deleteBtn');
-                    if (dBtn) dBtn.disabled=false;
-                }
-
-                , 100);
-        });
-});
-
-// Generate URL and Open Tab
-document.getElementById('searchBtn').addEventListener('click', ()=> {
-        let origin=document.getElementById('origin').value || '*';
-        let destination=document.getElementById('destination').value || '*';
-        const passengers=document.getElementById('passengers').value || 1;
-        const startDate=document.getElementById('startDate').value;
-        const endDate=document.getElementById('endDate').value;
-
-        const regions=['SC', 'NZ', 'OC', 'SP', 'SE', 'NA', 'ME', 'UK', 'EU', 'WN', 'CN', 'EN', 'LA', 'AF'];
-
-        const formatLocation=(loc)=> {
-            if (loc==='*') return loc;
-            const items=loc.split(',').map(item=> item.trim().toUpperCase());
-
-            // If all entries are regions, prefix the entire list with a single ';'
-            if (items.every(item=> regions.includes(item))) {
-                return ';' + items.join(',');
-            }
-
-            return items.map(item=> {
-                    if (regions.includes(item)) return ';' + item;
-                    return item;
-                }).join(',');
-        }
-
-        ;
-
-        origin=formatLocation(origin);
-        destination=formatLocation(destination);
-
-        const selectedCabins=Array.from(document.querySelectorAll('#cabinGroup input:checked')) .map(cb=> cb.value) .join(',');
-
-        const selectedStops=Array.from(document.querySelectorAll('#stopsGroup input:checked')) .map(cb=> cb.value);
-
-        let dateRange='';
-
-        if (startDate && endDate) {
-            dateRange=`$ {
-                startDate
-            }
-
-            I$ {
-                endDate
-            }
-
-            `;
-        }
-
-        else if (startDate && !endDate) {
-            dateRange=`$ {
-                startDate
-            }
-
-            I$ {
-                startDate
-            }
-
-            `;
-        }
-
-        const params=new URLSearchParams({
-            pg: '1',
-            o: origin,
-            d: destination,
-            c: selectedCabins,
-            p: passengers
-        });
-
-    if (dateRange) {
-        params.append('dr', dateRange);
+    .mini-btn:hover {
+        background: #e2e2e2;
     }
 
-    if (selectedStops.length > 0 && selectedStops.length < 4) {
-        params.append('st', selectedStops.join(','));
+    input[type="text"],
+    select {
+        width: 100%;
+        padding: 6px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 11px;
+        background: #fff;
     }
 
-    const targetUrl=`https: //flightrewardfinder.qantas.com/?${params.toString()}`;
+    .row {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+    }
 
-    chrome.tabs.create({
-        url: targetUrl
-    });
-});
+    .row>div {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .btn-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+            button {
+                flex: 1;
+                padding: 8px;
+                cursor: pointer;
+                border-radius: 4px;
+                border: none;
+                font-weight: bold;
+                font-size: 12px;
+            }
+
+            #searchBtn {
+                background: #e40000;
+                color: white;
+                flex: 1.5;
+            }
+
+
+            #searchBtn:disabled {
+                background: #e87a7a;
+                cursor: wait;
+            }
+
+
+                    #saveBtn {
+                        background: #333;
+                        color: white;
+                        flex: 1;
+                    }
+
+
+            #deleteBtn {
+                background: #6c757d;
+                color: white;
+                flex: 0.8;
+            }
+
+                    #deleteBtn:disabled {
+                        background: #cccccc;
+                        color: #888888;
+                        cursor: not-allowed;
+                    }
+
+
+    .help-text {
+        font-size: 10px;
+        color: #777;
+        margin-top: 3px;
+        line-height: 1.25;
+    }
+
+
+            /* Result Card */
+            .result-card {
+                margin-top: 12px;
+                padding: 10px;
+                background: #ffffff;
+                border: 1px solid #ddd;
+                border-left: 4px solid #e40000;
+                border-radius: 4px;
+            }
+
+                .result-card.hidden {
+                    display: none;
+                }
+
+                .result-card.is-error {
+                    border-left-color: #dc3545;
+                }
+
+                .result-card.is-muted {
+                    border-left-color: #6c757d;
+                }
+
+                .result-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    gap: 6px;
+                    margin-bottom: 6px;
+                }
+
+
+                .result-title {
+                    font-size: 12px;
+                    font-weight: bold;
+                    color: #222;
+                    line-height: 1.25;
+                }
+
+
+            .cabin-badge {
+                flex-shrink: 0;
+                background: #fdeaea;
+                color: #e40000;
+                border: 1px solid #f5c2c2;
+                border-radius: 3px;
+                padding: 1px 5px;
+                font-size: 10px;
+                font-weight: bold;
+            }
+
+
+                .result-price-row {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 6px;
+                    margin-bottom: 4px;
+                }
+
+            .result-price {
+                font-size: 20px;
+                font-weight: bold;
+                color: #e40000;
+                line-height: 1.1;
+            }
+
+
+    .result-pp {
+        font-size: 11px;
+        color: #666;
+    }
+
+
+    .result-date {
+        font-size: 13px;
+        font-weight: bold;
+        color: #222;
+    }
+
+
+                .result-tie {
+                    font-size: 10px;
+                    color: #666;
+                    margin-top: 1px;
+                    margin-bottom: 6px;
+                }
+
+
+                    .result-meta {
+                        font-size: 11px;
+                        color: #444;
+                        line-height: 1.4;
+                    }
+
+                    .result-meta-label {
+                        font-weight: bold;
+                        color: #333;
+                    }
+
+                        .result-footer {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-top: 8px;
+                            padding-top: 6px;
+                            border-top: 1px solid #eee;
+                            font-size: 10px;
+                            color: #777;
+                        }
+
+
+                        .result-actions {
+                            display: flex;
+                            gap: 8px;
+                            align-items: center;
+                        }
+
+                            .link-btn {
+                                flex: none;
+                                padding: 0;
+                                background: none;
+                                border: none;
+                                color: #e40000;
+                                font-size: 10px;
+                                font-weight: bold;
+                                cursor: pointer;
+                                text-decoration: underline;
+                            }
+
+
+                        .link-btn:hover {
+                            color: #b80000;
+                        }
+
+
+                        .loading-row {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            font-size: 11px;
+                            color: #444;
+                        }
+
+
+    .spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid #eee;
+        border-top-color: #e40000;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+        flex-shrink: 0;
+    }
+
+            .updating-tag {
+                font-size: 10px;
+                color: #e40000;
+                font-style: italic;
+            }
+
+                .status-message {
+                    font-size: 11px;
+                    color: #444;
+                    line-height: 1.4;
+                }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+}

@@ -3,200 +3,46 @@
 
 <head>
     <meta charset="utf-8">
-    <style>
-        body {
-            width: 340px;
-            font-family: sans-serif;
-            padding: 10px;
-            margin: 0;
-            background: #fdfdfd;
-        }
-
-        h3 {
-            margin: 0 0 10px 0;
-            font-size: 15px;
-            color: #e40000;
-            border-bottom: 2px solid #e40000;
-            padding-bottom: 4px;
-        }
-
-        .form-group {
-            margin-bottom: 8px;
-        }
-
-        label {
-            display: block;
-            font-size: 10px;
-            font-weight: bold;
-            margin-bottom: 2px;
-            color: #444;
-            text-transform: uppercase;
-        }
-
-        input[type="text"],
-        input[type="date"],
-        input[type="number"],
-        select {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 11px;
-        }
-
-        .row {
-            display: flex;
-            gap: 8px;
-            align-items: flex-end;
-        }
-
-        .row>div {
-            flex: 1;
-        }
-
-        /* Horizontal Checkboxes */
-        .checkbox-group {
-            display: flex;
-            justify-content: space-between;
-            background: #eee;
-            padding: 6px;
-            border-radius: 4px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            font-size: 10px;
-            white-space: nowrap;
-        }
-
-        .checkbox-item input {
-            margin-right: 3px;
-            margin-left: 0;
-        }
-
-        .btn-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        button {
-            flex: 1;
-            padding: 8px;
-            cursor: pointer;
-            border-radius: 4px;
-            border: none;
-            font-weight: bold;
-            font-size: 12px;
-        }
-
-        #searchBtn {
-            background: #e40000;
-            color: white;
-            flex: 1.5;
-        }
-
-        #saveBtn {
-            background: #333;
-            color: white;
-            flex: 1;
-        }
-
-        #deleteBtn {
-            background: #6c757d;
-            color: white;
-            flex: 0.8;
-        }
-
-        #deleteBtn:disabled {
-            background: #cccccc;
-            color: #888888;
-            cursor: not-allowed;
-        }
-
-        .help-text {
-            font-size: 10px;
-            color: #777;
-            margin-top: 2px;
-            line-height: 1.2;
-        }
-    </style>
+    <title>Viking Power Search</title>
+    <link rel="stylesheet" href="popup.css">
 </head>
 
 <body>
-    <h3>Qantas Power Search</h3>
+    <h3>Viking Power Search</h3>
 
-    <div class="form-group row" style="background: #f0f0f0; padding: 8px; border-radius: 4px; margin-bottom: 12px;">
-        <div style="flex: 1.2;">
-            <label>Profile</label>
-            <select id="profileSelect">
-                <option value="">-- New --</option>
-            </select>
+        <div class="form-group row profile-bar">
+            <div style="flex: 1.2;">
+                <label for="profileSelect">Saved Cruise</label>
+                <select id="profileSelect">
+                    <option value="">-- New --</option>
+                </select>
+            </div>
+            <div style="flex: 2;">
+                <label for="profileName">Save As</label>
+                <input type="text" id="profileName" placeholder="e.g. Iceland &amp; Greenland">
+            </div>
         </div>
-        <div style="flex: 2;">
-            <label>Save As</label>
-            <input type="text" id="profileName" placeholder="e.g. SYD to UK">
-        </div>
-    </div>
 
-    <div class="form-group row">
-        <div>
-            <label>Origin</label>
-            <input type="text" id="origin" placeholder="e.g. SYD;SC">
-        </div>
-        <div>
-            <label>Destination</label>
-            <input type="text" id="destination" placeholder="e.g. AMS;UK or *">
-        </div>
-    </div>
-    <div class="help-text form-group">Codes: SC (India), NZ, OC (Aus), SP (Pacific), SE (Asia), NA (Asia), ME (Middle
-        East),
-        UK, EU, WN/CN/EN (N America), LA (S America), AF (Africa)</div>
+        <div class="form-group">
+                <div class="label-row">
+                    <label for="cruiseUrl">Cruise URL</label>
+                    <button type="button" id="useTabBtn" class="mini-btn" title="Use URL from the active tab">Use
+                        Current Tab</button>
+                </div>
+                <input type="text" id="cruiseUrl" placeholder="Paste Viking Cruises AU pricing URL...">
+                <div class="help-text">Paste any vikingcruises.com.au itinerary or pricing URL (checks PS3 fares).</div>
+            </div>
 
-    <div class="form-group row">
-        <div style="flex: 2;">
-            <label>Start Date</label>
-            <input type="date" id="startDate">
-        </div>
-        <div style="flex: 2;">
-            <label>End Date</label>
-            <input type="date" id="endDate">
-        </div>
-        <div style="flex: 1;">
-            <label>Pax</label>
-            <input type="number" id="passengers" value="1" min="1" max="9">
-        </div>
-    </div>
+            <div class="btn-row">
+                <button type="button" id="saveBtn">Save</button>
+                <button type="button" id="deleteBtn" disabled>Delete</button>
+                <button type="button" id="searchBtn">Search</button>
+            </div>
 
-    <div class="form-group">
-        <label>Cabins</label>
-        <div class="checkbox-group" id="cabinGroup">
-            <div class="checkbox-item"><input type="checkbox" value="Economy"> Economy</div>
-            <div class="checkbox-item"><input type="checkbox" value="Premium Economy"> Premium</div>
-            <div class="checkbox-item"><input type="checkbox" value="Business"> Business</div>
-            <div class="checkbox-item"><input type="checkbox" value="First"> First</div>
-        </div>
-    </div>
+            <div id="resultCard" class="result-card hidden"></div>
 
-    <div class="form-group">
-        <label>Stops (Leave unchecked for Any)</label>
-        <div class="checkbox-group" id="stopsGroup">
-            <div class="checkbox-item"><input type="checkbox" value="direct"> Direct</div>
-            <div class="checkbox-item"><input type="checkbox" value="1"> 1 Stop</div>
-            <div class="checkbox-item"><input type="checkbox" value="2"> 2 Stops</div>
-            <div class="checkbox-item"><input type="checkbox" value="3+"> 3+ Stops</div>
-        </div>
-    </div>
-
-    <div class="btn-row">
-        <button id="saveBtn">Save</button>
-        <button id="deleteBtn" disabled>Delete</button>
-        <button id="searchBtn">Generate</button>
-    </div>
-
-    <script src="popup.js"></script>
+            <script src="viking-parser.js"></script>
+            <script src="popup.js"></script>
 </body>
 
 </html>
