@@ -1,0 +1,323 @@
+let profiles= {}
+
+;
+
+// Populate the profile dropdown with loaded profile keys
+function renderProfileDropdown(loadedProfiles) {
+    profiles=loadedProfiles || {}
+
+    ;
+    const select=document.getElementById('profileSelect');
+    select.innerHTML='<option value="">-- New --</option>';
+
+    Object.keys(profiles).forEach(name=> {
+            const opt=document.createElement('option');
+            opt.value=name;
+            opt.textContent=name;
+            select.appendChild(opt);
+        });
+}
+
+// Load profiles from sync storage with automatic migration from local storage
+function loadProfiles() {
+    chrome.storage.sync.get(['flightProfiles'], (result)=> {
+            if (result.flightProfiles && Object.keys(result.flightProfiles).length > 0) {
+                renderProfileDropdown(result.flightProfiles);
+            }
+
+            else {
+                chrome.storage.local.get(['flightProfiles'], (localResult)=> {
+                        if (localResult.flightProfiles && Object.keys(localResult.flightProfiles).length > 0) {
+                            chrome.storage.sync.set({
+                                flightProfiles: localResult.flightProfiles
+                            });
+                        renderProfileDropdown(localResult.flightProfiles);
+                    }
+
+                    else {
+                        renderProfileDropdown({});
+                }
+            });
+    }
+});
+}
+
+// Function to update min/max constraints on date widgets
+function updateDateConstraints() {
+    const startInput=document.getElementById('startDate');
+    const endInput=document.getElementById('endDate');
+    if ( !startInput || !endInput) return;
+
+    if (startInput.value) {
+        endInput.min=startInput.value;
+    }
+
+    else {
+        endInput.removeAttribute('min');
+    }
+
+    if (endInput.value) {
+        startInput.max=endInput.value;
+    }
+
+    else {
+        startInput.removeAttribute('max');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', ()=> {
+        loadProfiles();
+
+        const startInput=document.getElementById('startDate');
+        const endInput=document.getElementById('endDate');
+
+        // Initial constraints check
+        updateDateConstraints();
+
+        // Validation: When start date changes, ensure end date is not earlier and update constraints
+        startInput.addEventListener('change', ()=> {
+                if (startInput.value && endInput.value) {
+                    if (new Date(endInput.value) < new Date(startInput.value)) {
+                        endInput.value=startInput.value;
+                    }
+                }
+
+                updateDateConstraints();
+            });
+
+        // Validation: When end date changes, ensure start date is not later and update constraints
+        endInput.addEventListener('change', ()=> {
+                if (startInput.value && endInput.value) {
+                    if (new Date(startInput.value) > new Date(endInput.value)) {
+                        startInput.value=endInput.value;
+                    }
+                }
+
+                updateDateConstraints();
+            });
+    });
+
+// Handle Profile Selection
+document.getElementById('profileSelect').addEventListener('change', (e)=> {
+        const name=e.target.value;
+        const deleteBtn=document.getElementById('deleteBtn');
+
+        if (name && profiles[name]) {
+            const data=profiles[name];
+            document.getElementById('profileName').value=name;
+            document.getElementById('origin').value=data.origin || '';
+            document.getElementById('destination').value=data.destination || '';
+            document.getElementById('startDate').value=data.startDate || '';
+            document.getElementById('endDate').value=data.endDate || '';
+            document.getElementById('passengers').value=data.passengers || 1;
+
+            const cabinCheckboxes=document.querySelectorAll('#cabinGroup input');
+
+            cabinCheckboxes.forEach(cb=> {
+                    cb.checked=data.cabins ? data.cabins.includes(cb.value) : false;
+                });
+
+            const stopCheckboxes=document.querySelectorAll('#stopsGroup input');
+
+            stopCheckboxes.forEach(cb=> {
+                    cb.checked=data.stops ? data.stops.includes(cb.value) : false;
+                });
+
+            if (deleteBtn) deleteBtn.disabled=false;
+        }
+
+        else if ( !name) {
+            document.querySelectorAll('input[type="text"], input[type="date"]').forEach(el=> el.value='');
+            document.getElementById('passengers').value=1;
+            document.querySelectorAll('input[type="checkbox"]').forEach(el=> el.checked=false);
+
+            if (deleteBtn) deleteBtn.disabled=true;
+        }
+
+        updateDateConstraints();
+    });
+
+// Delete Profile
+const deleteBtn=document.getElementById('deleteBtn');
+
+if (deleteBtn) {
+    deleteBtn.addEventListener('click', (e)=> {
+            const name=document.getElementById('profileSelect').value;
+
+            if (name && profiles[name]) {
+                delete profiles[name];
+
+                chrome.storage.sync.set({
+                    flightProfiles: profiles
+                }
+
+                , ()=> {
+                    const btn=e.target;
+                    const originalText=btn.textContent;
+
+                    btn.textContent='Deleted!';
+                    btn.style.backgroundColor='#dc3545';
+
+                    setTimeout(()=> {
+                            btn.textContent=originalText;
+                            btn.style.backgroundColor='';
+                        }
+
+                        , 1000);
+
+                    const select=document.getElementById('profileSelect');
+                    select.value='';
+                    select.dispatchEvent(new Event('change'));
+
+                    loadProfiles();
+                });
+        }
+    });
+}
+
+// Save Profile
+document.getElementById('saveBtn').addEventListener('click', (e)=> {
+        const name=document.getElementById('profileName').value;
+        const btn=e.target;
+
+        if ( !name) {
+            const originalText=btn.textContent;
+            btn.textContent='Enter a name!';
+            btn.style.backgroundColor='#dc3545';
+
+            setTimeout(()=> {
+                    btn.textContent=originalText;
+                    btn.style.backgroundColor='#333';
+                }
+
+                , 2000);
+            return;
+        }
+
+        const selectedCabins=Array.from(document.querySelectorAll('#cabinGroup input:checked')) .map(cb=> cb.value);
+
+        const selectedStops=Array.from(document.querySelectorAll('#stopsGroup input:checked')) .map(cb=> cb.value);
+
+        profiles[name]= {
+            origin: document.getElementById('origin').value,
+            destination: document.getElementById('destination').value,
+            startDate: document.getElementById('startDate').value,
+            endDate: document.getElementById('endDate').value,
+            passengers: document.getElementById('passengers').value,
+            cabins: selectedCabins,
+            stops: selectedStops
+        }
+
+        ;
+
+        chrome.storage.sync.set({
+            flightProfiles: profiles
+        }
+
+        , ()=> {
+            const originalText=btn.textContent;
+            btn.textContent='Saved!';
+            btn.style.backgroundColor='#28a745';
+
+            setTimeout(()=> {
+                    btn.textContent=originalText;
+                    btn.style.backgroundColor='#333';
+                }
+
+                , 2000);
+
+            loadProfiles();
+
+            setTimeout(()=> {
+                    const select=document.getElementById('profileSelect');
+                    select.value=name;
+                    const dBtn=document.getElementById('deleteBtn');
+                    if (dBtn) dBtn.disabled=false;
+                }
+
+                , 100);
+        });
+});
+
+// Generate URL and Open Tab
+document.getElementById('searchBtn').addEventListener('click', ()=> {
+        let origin=document.getElementById('origin').value || '*';
+        let destination=document.getElementById('destination').value || '*';
+        const passengers=document.getElementById('passengers').value || 1;
+        const startDate=document.getElementById('startDate').value;
+        const endDate=document.getElementById('endDate').value;
+
+        const regions=['SC', 'NZ', 'OC', 'SP', 'SE', 'NA', 'ME', 'UK', 'EU', 'WN', 'CN', 'EN', 'LA', 'AF'];
+
+        const formatLocation=(loc)=> {
+            if (loc==='*') return loc;
+            const items=loc.split(',').map(item=> item.trim().toUpperCase());
+
+            // If all entries are regions, prefix the entire list with a single ';'
+            if (items.every(item=> regions.includes(item))) {
+                return ';' + items.join(',');
+            }
+
+            return items.map(item=> {
+                    if (regions.includes(item)) return ';' + item;
+                    return item;
+                }).join(',');
+        }
+
+        ;
+
+        origin=formatLocation(origin);
+        destination=formatLocation(destination);
+
+        const selectedCabins=Array.from(document.querySelectorAll('#cabinGroup input:checked')) .map(cb=> cb.value) .join(',');
+
+        const selectedStops=Array.from(document.querySelectorAll('#stopsGroup input:checked')) .map(cb=> cb.value);
+
+        let dateRange='';
+
+        if (startDate && endDate) {
+            dateRange=`$ {
+                startDate
+            }
+
+            I$ {
+                endDate
+            }
+
+            `;
+        }
+
+        else if (startDate && !endDate) {
+            dateRange=`$ {
+                startDate
+            }
+
+            I$ {
+                startDate
+            }
+
+            `;
+        }
+
+        const params=new URLSearchParams({
+            pg: '1',
+            o: origin,
+            d: destination,
+            c: selectedCabins,
+            p: passengers
+        });
+
+    if (dateRange) {
+        params.append('dr', dateRange);
+    }
+
+    if (selectedStops.length > 0 && selectedStops.length < 4) {
+        params.append('st', selectedStops.join(','));
+    }
+
+    const targetUrl=`https: //flightrewardfinder.qantas.com/?${params.toString()}`;
+
+    chrome.tabs.create({
+        url: targetUrl
+    });
+});
